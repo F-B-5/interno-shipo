@@ -2,245 +2,38 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fabian | Portfolio</title>
+    <title>Minecraft Motion Classifier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        /* Modern Design Variables */
-        :root {
-            --primary: #2563eb;
-            --dark: #1e293b;
-            --light: #f8fafc;
-            --text: #334155;
-            --text-light: #64748b;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            line-height: 1.6;
-            color: var(--text);
-            background-color: #ffffff;
-            scroll-behavior: smooth;
-        }
-
-        /* Responsive Navigation Bar */
-        header {
-            background: #ffffff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 1.25rem 1.5rem;
-        }
-
-        .logo {
-            font-weight: 700;
-            font-size: 1.3rem;
-            color: var(--dark);
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text);
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-
-        .nav-links a:hover {
-            color: var(--primary);
-        }
-
-        /* Clean Sections */
-        section {
-            padding: 5rem 1.5rem;
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        /* Hero Landing Section */
-        .hero {
-            text-align: center;
-            padding: 8rem 1.5rem;
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            max-width: 100%;
-        }
-
-        .hero h1 {
-            font-size: 3rem;
-            color: var(--dark);
-            margin-bottom: 1rem;
-            font-weight: 800;
-        }
-
-        .hero p {
-            font-size: 1.25rem;
-            color: var(--text-light);
-            max-width: 600px;
-            margin: 0 auto 2rem auto;
-        }
-
-        .btn {
-            display: inline-block;
-            background: var(--primary);
-            color: #ffffff;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.375rem;
-            text-decoration: none;
-            font-weight: 500;
-            transition: opacity 0.2s;
-        }
-
-        .btn:hover {
-            opacity: 0.9;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2rem;
-            color: var(--dark);
-            margin-bottom: 3rem;
-            position: relative;
-        }
-
-        /* Responsive Grid Layout for Project Cards */
-        .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        .project-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
-            padding: 2rem;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .project-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
-        }
-
-        .project-card h3 {
-            margin-bottom: 0.75rem;
-            color: var(--dark);
-        }
-
-        .project-card p {
-            color: var(--text-light);
-            font-size: 0.95rem;
-            margin-bottom: 1.5rem;
-        }
-
-        /* Contact Section */
-        .contact {
-            text-align: center;
-        }
-
-        /* Minimalistic Footer */
-        footer {
-            background: var(--dark);
-            color: #ffffff;
-            text-align: center;
-            padding: 2.5rem;
-            margin-top: 5rem;
-        }
-
-        /* RESPONSIVE MEDIA QUERIES (The magic for phones) */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2.25rem;
-            }
-            
-            nav {
-                flex-direction: column;
-                gap: 1.25rem;
-                text-align: center;
-            }
-            
-            .nav-links {
-                gap: 1.5rem;
-            }
-            
-            section {
-                padding: 3.5rem 1.5rem;
-            }
-        }
+        body { background-color: #2a2a2a; color: #fff; font-family: 'Press Start 2P', cursive; text-align: center; }
+        .crafting-table { border: 8px solid #8b4513; background-color: #555; padding: 20px; margin: 20px auto; width: 80%; border-radius: 4px; }
+        .slot { border: 4px solid #333; background: #444; margin: 10px; padding: 15px; display: inline-block; }
+        .redstone-lamp { height: 50px; width: 50px; background: #660000; border: 4px solid #333; margin: 10px auto; transition: background 0.3s; }
+        .lamp-on { background: #ff0000; box-shadow: 0 0 20px #ff0000; }
+        canvas { background: #000; border: 4px solid #fff; margin-top: 20px; }
+        button { background: #228b22; color: white; border: 4px solid #006400; padding: 15px; font-family: inherit; cursor: pointer; }
     </style>
 </head>
 <body>
+    <h1>Gesture Crafting</h1>
+    <button id="startBtn">START SENSORS</button>
+    <div id="status" class="slot">Status: Idle</div>
+    
+    <canvas id="waveform" width="400" height="200"></canvas>
 
-    <header>
-        <nav>
-            <a href="#" class="logo">Fabian.dev</a>
-            <ul class="nav-links">
-                <li><a href="#projects">Projects</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
+    <div class="crafting-table">
+        <div class="slot">Up-Down: <span id="prob-updown">0%</span></div>
+        <div class="slot">Left-Right: <span id="prob-leftright">0%</span></div>
+    </div>
 
-    <section class="hero">
-        <h1>Hi, I'm Fabian</h1>
-        <p>A Web Development Intern passionate about building responsive web applications and deploying clean architecture.</p>
-        <a href="#projects" class="btn">Explore My Work</a>
-    </section>
+    <div id="lamp" class="redstone-lamp"></div>
 
-    <section id="projects">
-        <h2 class="section-title">Featured Projects</h2>
-        <div class="projects-grid">
-            <div class="project-card">
-                <h3>Responsive Portfolio</h3>
-                <p>A polished individual landing page built locally inside a dedicated project environment and deployed using Firebase Hosting tools.</p>
-                <a href="https://github.com/F-B-V/interno-shipo" target="_blank" class="btn">View Source</a>
-            </div>
-            
-            <div class="project-card">
-                <h3>Git Architecture Sync</h3>
-                <p>Configured empty remote repositories, mapped localized paths with origin links, and handled push automation pipelines via VS Code.</p>
-                <a href="#" class="btn">Details</a>
-            </div>
-
-            <div class="project-card">
-                <h3>Firebase Cloud Setup</h3>
-                <p>Initialized production clusters through web dashboard integrations and mapped custom public directory allocations using Node tools.</p>
-                <a href="#" class="btn">Details</a>
-            </div>
-        </div>
-    </section>
-
-    <section id="contact" class="contact">
-        <h2 class="section-title">Get In Touch</h2>
-        <p style="color: var(--text-light); margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto;">
-            I'm currently looking for new engineering challenges and full-stack project tracking. Drop an email to chat.
-        </p>
-        <a href="mailto:your.email@example.com" class="btn">Send Email</a>
-    </section>
-
-    <footer>
-        <p>&copy; 2026 Fabian. Managed with Git &bull; Published via Firebase.</p>
-    </footer>
-
+    <script src="edge-impulse-standalone.js"></script>
+    <script>
+        // Integration placeholder: Initialize WASM and sensor pipeline here
+        // The logic will capture accelerometer X, Y, Z, buffer it, and feed 
+        // it into the Edge Impulse WASM classifier.
+        console.log("Minecraft UI initialized. Ready to connect WASM.");
+    </script>
 </body>
 </html>
