@@ -31,31 +31,34 @@
     <script src="edge-impulse-standalone.js"></script>
     <script>
 document.getElementById("startBtn").addEventListener("click", async () => {
-    // Check if the browser supports the permission API
-    if (typeof DeviceMotionEvent.requestPermission === "function") {
+    // Check if the browser requires explicit permission (iOS 13+ and some others)
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
         try {
             const permission = await DeviceMotionEvent.requestPermission();
-            if (permission === "granted") {
-                console.log("Permission granted!");
-                // Now you can start your sensors/Edge Impulse logic here
-                startSensorPipeline(); 
+            if (permission === 'granted') {
+                window.addEventListener('devicemotion', handleMotion);
+                document.getElementById("status").innerText = "Status: Sensors Active";
             } else {
-                alert("Permission denied. Motion sensors are required for this app.");
+                alert("Permission denied. You must allow motion access.");
             }
         } catch (error) {
-            console.error("Error requesting sensor permission:", error);
+            console.error("Permission request failed:", error);
+            alert("Error: " + error);
         }
     } else {
-        // For browsers that don't require explicit permission (like some Android versions)
-        console.log("Permission not required or not supported, starting directly.");
-        startSensorPipeline();
+        // Fallback for Android and older browsers (they don't need a formal request)
+        console.log("No permission needed or API not supported.");
+        window.addEventListener('devicemotion', handleMotion);
+        document.getElementById("status").innerText = "Status: Sensors Active (No prompt required)";
     }
 });
 
-function startSensorPipeline() {
-    // Place your existing sensor initialization logic here
-    document.getElementById("status").innerText = "Status: Sensors Active";
-    // ... your Edge Impulse/accelerometer code
+function handleMotion(event) {
+    // This is just a test to verify sensors are firing
+    const acc = event.accelerationIncludingGravity;
+    if (acc) {
+        console.log("Data detected: X=" + acc.x.toFixed(2));
+    }
 }
     </script>
 </body>
