@@ -35,42 +35,55 @@
     </div>
 
     <script src="edge-impulse-standalone.js"></script>
-    <script>
-        let classifier;
+  <script>
+    let classifier;
+    let buffer = [];
+    const WINDOW_SIZE = 50; // Adjust this to match your Edge Impulse project settings
 
-        async function init() {
-            // Adjust this path if your model is in a subfolder
-            classifier = new EdgeImpulseClassifier();
-            await classifier.init();
-        }
+    async function init() {
+        classifier = new EdgeImpulseClassifier();
+        await classifier.init();
+        console.log("Model Initialized");
+    }
 
-        async function requestSensorAccess() {
-            if (typeof DeviceMotionEvent.requestPermission === 'function') {
-                const p = await DeviceMotionEvent.requestPermission();
-                if (p === 'granted') start();
-            } else { start(); }
-        }
+    async function requestSensorAccess() {
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
+            const p = await DeviceMotionEvent.requestPermission();
+            if (p === 'granted') start();
+            else alert("Permission denied.");
+        } else { start(); }
+    }
 
-        function start() {
-            document.getElementById("status").innerText = "● Sensor Online";
-            window.addEventListener('devicemotion', (e) => {
-                const acc = e.accelerationIncludingGravity;
-                document.getElementById("val-x").innerText = acc.x.toFixed(1);
-                document.getElementById("val-y").innerText = acc.y.toFixed(1);
-                document.getElementById("val-z").innerText = acc.z.toFixed(1);
+    function start() {
+        document.getElementById("status").innerText = "● Sensor Online";
+        window.addEventListener('devicemotion', (e) => {
+            const acc = e.accelerationIncludingGravity;
+            
+            // 1. Update UI raw values
+            document.getElementById("val-x").innerText = acc.x.toFixed(1);
+            document.getElementById("val-y").innerText = acc.y.toFixed(1);
+            document.getElementById("val-z").innerText = acc.z.toFixed(1);
 
-                // Run inference
-                const result = classifier.classify([acc.x, acc.y, acc.z]);
+            // 2. Buffer data points
+            buffer.push(acc.x, acc.y, acc.z);
+            
+            // 3. Only run inference when buffer is full
+            if (buffer.length >= WINDOW_SIZE * 3) {
+                const result = classifier.classify(buffer);
+                
                 const upDown = result.results.find(r => r.label === 'Up-Down').value;
                 const leftRight = result.results.find(r => r.label === 'Left-Right').value;
                 
                 document.getElementById("bar-up").style.width = (upDown * 100) + "%";
                 document.getElementById("bar-left").style.width = (leftRight * 100) + "%";
-            });
-        }
+                
+                buffer = []; // Clear buffer for next window
+            }
+        });
+    }
 
-        document.getElementById("startBtn").addEventListener("click", requestSensorAccess);
-        init();
-    </script>
+    document.getElementById("startBtn").addEventListener("click", requestSensorAccess);
+    init();
+</script>
 </body>
 </html>
