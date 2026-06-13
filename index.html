@@ -5,58 +5,72 @@
     <title>Minecraft Telemetry Engine</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #1a1a1a; color: #00ff00; font-family: 'Press Start 2P', cursive; padding: 20px; }
-        .dashboard { border: 4px solid #444; background: #222; padding: 20px; max-width: 500px; margin: auto; }
-        .sensor-status { background: #333; padding: 10px; border-radius: 5px; text-align: center; margin-bottom: 20px; border: 2px solid #555; }
-        .btn { background: #2a5a2a; color: white; padding: 15px; width: 100%; border: 4px solid #1a3a1a; cursor: pointer; font-family: inherit; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .card { background: #333; padding: 15px; border: 2px solid #444; text-align: center; }
-        .val { font-size: 1.2em; display: block; margin-top: 10px; color: #fff; }
+        body { background: #0a0a0a; color: #00ff00; font-family: 'Press Start 2P', cursive; padding: 20px; }
+        .dashboard { border: 4px solid #333; background: #111; padding: 20px; max-width: 600px; margin: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .btn { background: #004d00; color: white; padding: 15px; width: 100%; border: 4px solid #002600; cursor: pointer; margin: 10px 0; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .card { background: #1a1a1a; padding: 15px; border: 2px solid #333; text-align: center; font-size: 0.7em; }
+        .prob-bar { background: #222; height: 20px; margin: 10px 0; border: 2px solid #444; position: relative; }
+        .prob-fill { background: #00ff00; height: 100%; width: 0%; transition: width 0.2s; }
     </style>
 </head>
 <body>
     <div class="dashboard">
-        <h1>AERO MINECRAFT</h1>
-        <div id="status" class="sensor-status">Sensor Offline</div>
-        <button id="startBtn" class="btn">ACTIVATE SENSORS</button>
-        
-        <div class="grid">
-            <div class="card">X-AXIS<span id="x-val" class="val">0.0</span></div>
-            <div class="card">Y-AXIS<span id="y-val" class="val">0.0</span></div>
+        <div class="header">
+            <h2>AERO MINECRAFT</h2>
+            <div id="status">● Sensor Offline</div>
         </div>
+        <button id="startBtn" class="btn">ACTIVATE SENSORS</button>
+
+        <div class="grid">
+            <div class="card">X: <span id="val-x">0.0</span></div>
+            <div class="card">Y: <span id="val-y">0.0</span></div>
+            <div class="card">Z: <span id="val-z">0.0</span></div>
+        </div>
+
+        <h3>MODEL PROBABILITY</h3>
+        <div>Up-Down: <div class="prob-bar"><div id="bar-up" class="prob-fill"></div></div></div>
+        <div>Left-Right: <div class="prob-bar"><div id="bar-left" class="prob-fill"></div></div></div>
     </div>
 
-   <script>
-    // Telemetry state
-    let isStreaming = false;
+    <script src="edge-impulse-standalone.js"></script>
+    <script>
+        let classifier;
 
-    async function requestSensorAccess() {
-        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-            const permission = await DeviceMotionEvent.requestPermission();
-            if (permission === 'granted') startTelemetry();
-        } else { startTelemetry(); }
-    }
+        async function init() {
+            // Adjust this path if your model is in a subfolder
+            classifier = new EdgeImpulseClassifier();
+            await classifier.init();
+        }
 
-    function startTelemetry() {
-        if (isStreaming) return;
-        isStreaming = true;
-        document.getElementById("status").innerText = "Status: Sensor Online";
+        async function requestSensorAccess() {
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                const p = await DeviceMotionEvent.requestPermission();
+                if (p === 'granted') start();
+            } else { start(); }
+        }
 
-        window.addEventListener('devicemotion', (event) => {
-            const acc = event.accelerationIncludingGravity;
-            if (acc) {
-                // Update your "Axis" values in real-time
-                document.getElementById("x-val").innerText = acc.x.toFixed(3);
-                document.getElementById("y-val").innerText = acc.y.toFixed(3);
+        function start() {
+            document.getElementById("status").innerText = "● Sensor Online";
+            window.addEventListener('devicemotion', (e) => {
+                const acc = e.accelerationIncludingGravity;
+                document.getElementById("val-x").innerText = acc.x.toFixed(1);
+                document.getElementById("val-y").innerText = acc.y.toFixed(1);
+                document.getElementById("val-z").innerText = acc.z.toFixed(1);
+
+                // Run inference
+                const result = classifier.classify([acc.x, acc.y, acc.z]);
+                const upDown = result.results.find(r => r.label === 'Up-Down').value;
+                const leftRight = result.results.find(r => r.label === 'Left-Right').value;
                 
-                // HERE: Add the buffer logic to feed your WASM classifier
-                // The AERO app likely uses a circular buffer to hold 
-                // X, Y, Z values before sending them to the model
-            }
-        });
-    }
+                document.getElementById("bar-up").style.width = (upDown * 100) + "%";
+                document.getElementById("bar-left").style.width = (leftRight * 100) + "%";
+            });
+        }
 
-    document.getElementById("startBtn").addEventListener("click", requestSensorAccess);
-</script>
+        document.getElementById("startBtn").addEventListener("click", requestSensorAccess);
+        init();
+    </script>
 </body>
 </html>
