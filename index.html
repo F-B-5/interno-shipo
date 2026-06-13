@@ -54,10 +54,12 @@ document.getElementById("startBtn").addEventListener("click", async () => {
 });
 
 function handleMotion(event) {
-    // This is just a test to verify sensors are firing
     const acc = event.accelerationIncludingGravity;
-    if (acc) {
-        console.log("Data detected: X=" + acc.x.toFixed(2));
+    if (acc && acc.x !== null) {
+        document.getElementById("status").innerText = "Data: " + acc.x.toFixed(1);
+        console.log("X-axis motion:", acc.x);
+    } else {
+        document.getElementById("status").innerText = "Status: Sensors idle/No data";
     }
 }
     </script>
