@@ -26,26 +26,37 @@
         </div>
     </div>
 
-    <script>
-        async function requestSensorAccess() {
-            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-                const permission = await DeviceMotionEvent.requestPermission();
-                if (permission === 'granted') startDataStream();
-            } else { startDataStream(); }
-        }
+   <script>
+    // Telemetry state
+    let isStreaming = false;
 
-        function startDataStream() {
-            document.getElementById("status").innerText = "Status: Sensor Online";
-            window.addEventListener('devicemotion', (event) => {
-                const acc = event.accelerationIncludingGravity;
-                if (acc) {
-                    document.getElementById("x-val").innerText = acc.x.toFixed(2);
-                    document.getElementById("y-val").innerText = acc.y.toFixed(2);
-                    // Pass to Edge Impulse here
-                }
-            });
-        }
-        document.getElementById("startBtn").addEventListener("click", requestSensorAccess);
-    </script>
+    async function requestSensorAccess() {
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+            const permission = await DeviceMotionEvent.requestPermission();
+            if (permission === 'granted') startTelemetry();
+        } else { startTelemetry(); }
+    }
+
+    function startTelemetry() {
+        if (isStreaming) return;
+        isStreaming = true;
+        document.getElementById("status").innerText = "Status: Sensor Online";
+
+        window.addEventListener('devicemotion', (event) => {
+            const acc = event.accelerationIncludingGravity;
+            if (acc) {
+                // Update your "Axis" values in real-time
+                document.getElementById("x-val").innerText = acc.x.toFixed(3);
+                document.getElementById("y-val").innerText = acc.y.toFixed(3);
+                
+                // HERE: Add the buffer logic to feed your WASM classifier
+                // The AERO app likely uses a circular buffer to hold 
+                // X, Y, Z values before sending them to the model
+            }
+        });
+    }
+
+    document.getElementById("startBtn").addEventListener("click", requestSensorAccess);
+</script>
 </body>
 </html>
