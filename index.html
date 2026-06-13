@@ -30,10 +30,33 @@
 
     <script src="edge-impulse-standalone.js"></script>
     <script>
-        // Integration placeholder: Initialize WASM and sensor pipeline here
-        // The logic will capture accelerometer X, Y, Z, buffer it, and feed 
-        // it into the Edge Impulse WASM classifier.
-        console.log("Minecraft UI initialized. Ready to connect WASM.");
+document.getElementById("startBtn").addEventListener("click", async () => {
+    // Check if the browser supports the permission API
+    if (typeof DeviceMotionEvent.requestPermission === "function") {
+        try {
+            const permission = await DeviceMotionEvent.requestPermission();
+            if (permission === "granted") {
+                console.log("Permission granted!");
+                // Now you can start your sensors/Edge Impulse logic here
+                startSensorPipeline(); 
+            } else {
+                alert("Permission denied. Motion sensors are required for this app.");
+            }
+        } catch (error) {
+            console.error("Error requesting sensor permission:", error);
+        }
+    } else {
+        // For browsers that don't require explicit permission (like some Android versions)
+        console.log("Permission not required or not supported, starting directly.");
+        startSensorPipeline();
+    }
+});
+
+function startSensorPipeline() {
+    // Place your existing sensor initialization logic here
+    document.getElementById("status").innerText = "Status: Sensors Active";
+    // ... your Edge Impulse/accelerometer code
+}
     </script>
 </body>
 </html>
