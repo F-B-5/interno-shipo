@@ -1,2 +1,0 @@
-# interno-shipo
-hello
