@@ -30,38 +30,44 @@
 
     <script src="edge-impulse-standalone.js"></script>
     <script>
-document.getElementById("startBtn").addEventListener("click", async () => {
-    // Check if the browser requires explicit permission (iOS 13+ and some others)
-    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-        try {
-            const permission = await DeviceMotionEvent.requestPermission();
-            if (permission === 'granted') {
-                window.addEventListener('devicemotion', handleMotion);
-                document.getElementById("status").innerText = "Status: Sensors Active";
-            } else {
-                alert("Permission denied. You must allow motion access.");
+<script>
+    // Function to handle the sensor request
+    async function requestSensorAccess() {
+        // 1. Check for iOS 13+ permission requirements
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+            try {
+                const permission = await DeviceMotionEvent.requestPermission();
+                if (permission === 'granted') {
+                    startDataStream();
+                } else {
+                    alert("Permission denied. Motion sensors are required.");
+                }
+            } catch (error) {
+                console.error("Permission error:", error);
             }
-        } catch (error) {
-            console.error("Permission request failed:", error);
-            alert("Error: " + error);
+        } else {
+            // 2. Android/Desktop: No formal request needed, just start
+            startDataStream();
         }
-    } else {
-        // Fallback for Android and older browsers (they don't need a formal request)
-        console.log("No permission needed or API not supported.");
-        window.addEventListener('devicemotion', handleMotion);
-        document.getElementById("status").innerText = "Status: Sensors Active (No prompt required)";
     }
-});
 
-function handleMotion(event) {
-    const acc = event.accelerationIncludingGravity;
-    if (acc && acc.x !== null) {
-        document.getElementById("status").innerText = "Data: " + acc.x.toFixed(1);
-        console.log("X-axis motion:", acc.x);
-    } else {
-        document.getElementById("status").innerText = "Status: Sensors idle/No data";
+    // 3. The actual telemetry stream
+    function startDataStream() {
+        window.addEventListener('devicemotion', (event) => {
+            const acc = event.accelerationIncludingGravity;
+            if (acc) {
+                // Update UI
+                document.getElementById("status").innerText = "Status: Sensor Online";
+                // FEED TO WASM: This is where you pass data to your classifier
+                // Example: window.classify(acc.x, acc.y, acc.z);
+                console.log("Motion Data:", acc.x, acc.y, acc.z);
+            }
+        });
     }
-}
+
+    // Attach to your button
+    document.getElementById("startBtn").addEventListener("click", requestSensorAccess);
+</script>
     </script>
 </body>
 </html>
