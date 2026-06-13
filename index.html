@@ -53,16 +53,22 @@
 
     // 3. The actual telemetry stream
     function startDataStream() {
-        window.addEventListener('devicemotion', (event) => {
-            const acc = event.accelerationIncludingGravity;
-            if (acc) {
-                // Update UI
-                document.getElementById("status").innerText = "Status: Sensor Online";
-                // FEED TO WASM: This is where you pass data to your classifier
-                // Example: window.classify(acc.x, acc.y, acc.z);
-                console.log("Motion Data:", acc.x, acc.y, acc.z);
-            }
-        });
+    window.addEventListener('devicemotion', (event) => {
+        const acc = event.accelerationIncludingGravity;
+        if (acc) {
+            document.getElementById("status").innerText = "Status: Sensor Online";
+            
+            // 1. You need to pass these values to your classifier
+            // Let's assume your classifier has a function called classify(x, y, z)
+            // const result = window.classify(acc.x, acc.y, acc.z);
+            
+            // 2. TEMPORARY DEBUG: Update labels to show raw data is flowing
+            // Delete these lines once you connect the real classifier
+            document.getElementById("prob-updown").innerText = Math.abs(acc.y).toFixed(1) + "%";
+            document.getElementById("prob-leftright").innerText = Math.abs(acc.x).toFixed(1) + "%";
+        }
+    });
+}
     }
 
     // Attach to your button
