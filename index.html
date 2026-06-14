@@ -1,40 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Minecraft Gesture Crafting</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <style>
-        body { background: #1a1a1a; color: #00ff00; font-family: 'Press Start 2P', cursive; padding: 20px; }
-        .dashboard { border: 4px solid #444; background: #222; padding: 20px; max-width: 500px; margin: auto; }
-        .status-box { background: #000; padding: 10px; border: 2px solid #555; text-align: center; margin: 10px 0; }
-        .btn { background: #2a5a2a; color: white; padding: 15px; width: 100%; border: 4px solid #1a3a1a; cursor: pointer; font-size: 14px; }
-        .card { background: #333; padding: 15px; border: 2px solid #444; margin: 5px; }
-        .bar-container { background: #000; height: 20px; margin-top: 5px; border: 1px solid #444; }
-        .bar-fill { background: #00ff00; height: 100%; width: 0%; transition: width 0.1s; }
-    </style>
-</head>
-<body>
-
-<div class="dashboard">
-    <h1>Gesture Crafting</h1>
-    <div id="status" class="status-box">Status: Offline</div>
-    <button id="startBtn" class="btn">START SENSORS</button>
-
-    <div class="card">
-        <div>Up-Down</div>
-        <div class="bar-container"><div id="bar-up" class="bar-fill"></div></div>
-        <div id="text-up">0%</div>
-    </div>
-    
-    <div class="card">
-        <div>Left-Right</div>
-        <div class="bar-container"><div id="bar-left" class="bar-fill"></div></div>
-        <div id="text-left">0%</div>
-    </div>
-</div>
-
-<script src="edge-impulse-standalone.js"></script>
 <script>
     let classifier;
 
@@ -54,27 +17,32 @@
         startPipeline();
     }
 
-function startPipeline() {
-    document.getElementById("status").innerText = "Status: Online (Hardware Verified)";
-    
-    window.addEventListener('devicemotion', (e) => {
-        const acc = e.accelerationIncludingGravity;
-        if (!acc) return;
+    function startPipeline() {
+        document.getElementById("status").innerText = "Status: Online";
+        const wave = document.getElementById("wave-indicator");
+        if (wave) {
+            wave.style.animation = "moveWave 1s linear infinite";
+        }
 
-        // DEBUG: Force these values to display on screen
-        // Add these to your HTML if they don't exist yet!
-        console.log("X:", acc.x, "Y:", acc.y, "Z:", acc.z);
-        
-        // This confirms data flow
-        const result = classifier.classify([acc.x, acc.y, acc.z]);
-        
-        // ... (rest of your probability logic)
-    });
-}
+        window.addEventListener('devicemotion', (e) => {
+            const acc = e.accelerationIncludingGravity;
+            if (!acc) return;
+
+            // Run inference
+            const res = classifier.classify([acc.x, acc.y, acc.z]);
+            
+            // Ensure labels here match your Edge Impulse project EXACTLY
+            const up = res.results.find(r => r.label === 'Up-Down').value;
+            const left = res.results.find(r => r.label === 'Left-Right').value;
+
+            document.getElementById("bar-up").style.width = (up * 100) + "%";
+            document.getElementById("text-up").innerText = (up * 100).toFixed(0) + "%";
+            
+            document.getElementById("bar-left").style.width = (left * 100) + "%";
+            document.getElementById("text-left").innerText = (left * 100).toFixed(0) + "%";
+        });
     }
 
     document.getElementById("startBtn").addEventListener("click", requestAccess);
     init();
 </script>
-</body>
-</html>
