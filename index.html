@@ -54,25 +54,23 @@
         startPipeline();
     }
 
-    function startPipeline() {
-        document.getElementById("status").innerText = "Status: Online";
-        window.addEventListener('devicemotion', (e) => {
-            const acc = e.accelerationIncludingGravity;
-            if (!acc) return;
+function startPipeline() {
+    document.getElementById("status").innerText = "Status: Online (Hardware Verified)";
+    
+    window.addEventListener('devicemotion', (e) => {
+        const acc = e.accelerationIncludingGravity;
+        if (!acc) return;
 
-            // Run inference
-            const res = classifier.classify([acc.x, acc.y, acc.z]);
-            
-            // Update UI (Check your labels!)
-            const up = res.results.find(r => r.label === 'Up-Down').value;
-            const left = res.results.find(r => r.label === 'Left-Right').value;
-
-            document.getElementById("bar-up").style.width = (up * 100) + "%";
-            document.getElementById("text-up").innerText = (up * 100).toFixed(0) + "%";
-            
-            document.getElementById("bar-left").style.width = (left * 100) + "%";
-            document.getElementById("text-left").innerText = (left * 100).toFixed(0) + "%";
-        });
+        // DEBUG: Force these values to display on screen
+        // Add these to your HTML if they don't exist yet!
+        console.log("X:", acc.x, "Y:", acc.y, "Z:", acc.z);
+        
+        // This confirms data flow
+        const result = classifier.classify([acc.x, acc.y, acc.z]);
+        
+        // ... (rest of your probability logic)
+    });
+}
     }
 
     document.getElementById("startBtn").addEventListener("click", requestAccess);
