@@ -2,88 +2,81 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Minecraft Telemetry Engine</title>
+    <title>Minecraft Gesture Crafting</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        body { background: #0a0a0a; color: #00ff00; font-family: 'Press Start 2P', cursive; padding: 20px; }
-        .dashboard { border: 4px solid #333; background: #111; padding: 20px; max-width: 600px; margin: auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .btn { background: #004d00; color: white; padding: 15px; width: 100%; border: 4px solid #002600; cursor: pointer; margin: 10px 0; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 20px 0; }
-        .card { background: #1a1a1a; padding: 15px; border: 2px solid #333; text-align: center; font-size: 0.7em; }
-        .prob-bar { background: #222; height: 20px; margin: 10px 0; border: 2px solid #444; position: relative; }
-        .prob-fill { background: #00ff00; height: 100%; width: 0%; transition: width 0.2s; }
+        body { background: #1a1a1a; color: #00ff00; font-family: 'Press Start 2P', cursive; padding: 20px; }
+        .dashboard { border: 4px solid #444; background: #222; padding: 20px; max-width: 500px; margin: auto; }
+        .status-box { background: #000; padding: 10px; border: 2px solid #555; text-align: center; margin: 10px 0; }
+        .btn { background: #2a5a2a; color: white; padding: 15px; width: 100%; border: 4px solid #1a3a1a; cursor: pointer; font-size: 14px; }
+        .card { background: #333; padding: 15px; border: 2px solid #444; margin: 5px; }
+        .bar-container { background: #000; height: 20px; margin-top: 5px; border: 1px solid #444; }
+        .bar-fill { background: #00ff00; height: 100%; width: 0%; transition: width 0.1s; }
     </style>
 </head>
 <body>
-    <div class="dashboard">
-        <div class="header">
-            <h2>AERO MINECRAFT</h2>
-            <div id="status">● Sensor Offline</div>
-        </div>
-        <button id="startBtn" class="btn">ACTIVATE SENSORS</button>
 
-        <div class="grid">
-            <div class="card">X: <span id="val-x">0.0</span></div>
-            <div class="card">Y: <span id="val-y">0.0</span></div>
-            <div class="card">Z: <span id="val-z">0.0</span></div>
-        </div>
+<div class="dashboard">
+    <h1>Gesture Crafting</h1>
+    <div id="status" class="status-box">Status: Offline</div>
+    <button id="startBtn" class="btn">START SENSORS</button>
 
-        <h3>MODEL PROBABILITY</h3>
-        <div>Up-Down: <div class="prob-bar"><div id="bar-up" class="prob-fill"></div></div></div>
-        <div>Left-Right: <div class="prob-bar"><div id="bar-left" class="prob-fill"></div></div></div>
+    <div class="card">
+        <div>Up-Down</div>
+        <div class="bar-container"><div id="bar-up" class="bar-fill"></div></div>
+        <div id="text-up">0%</div>
     </div>
+    
+    <div class="card">
+        <div>Left-Right</div>
+        <div class="bar-container"><div id="bar-left" class="bar-fill"></div></div>
+        <div id="text-left">0%</div>
+    </div>
+</div>
 
-    <script src="edge-impulse-standalone.js"></script>
+<script src="edge-impulse-standalone.js"></script>
 <script>
     let classifier;
-    let buffer = [];
-    const WINDOW_SIZE = 50;
 
-    // 1. Move initialization here so it waits for the click
-    async function setupApp() {
-        classifier = new EdgeImpulseClassifier();
-        await classifier.init();
-        console.log("Model Initialized");
+    async function init() {
+        try {
+            classifier = new EdgeImpulseClassifier();
+            await classifier.init();
+            console.log("Classifier Ready");
+        } catch(e) { console.error("Init failed", e); }
     }
 
-    async function requestSensorAccess() {
-        // Run setup first
-        await setupApp();
-
+    async function requestAccess() {
         if (typeof DeviceMotionEvent.requestPermission === 'function') {
             const p = await DeviceMotionEvent.requestPermission();
-            if (p === 'granted') start();
-            else alert("Permission denied.");
-        } else { start(); }
+            if (p !== 'granted') return alert("Permission Denied");
+        }
+        startPipeline();
     }
 
-    function start() {
-        document.getElementById("status").innerText = "● Sensor Online";
+    function startPipeline() {
+        document.getElementById("status").innerText = "Status: Online";
         window.addEventListener('devicemotion', (e) => {
             const acc = e.accelerationIncludingGravity;
             if (!acc) return;
-            
-            document.getElementById("val-x").innerText = acc.x.toFixed(1);
-            document.getElementById("val-y").innerText = acc.y.toFixed(1);
-            document.getElementById("val-z").innerText = acc.z.toFixed(1);
 
-            buffer.push(acc.x, acc.y, acc.z);
+            // Run inference
+            const res = classifier.classify([acc.x, acc.y, acc.z]);
             
-            if (buffer.length >= WINDOW_SIZE * 3) {
-                const result = classifier.classify(buffer);
-                const upDown = result.results.find(r => r.label === 'Up-Down').value;
-                const leftRight = result.results.find(r => r.label === 'Left-Right').value;
-                
-                document.getElementById("bar-up").style.width = (upDown * 100) + "%";
-                document.getElementById("bar-left").style.width = (leftRight * 100) + "%";
-                buffer = []; 
-            }
+            // Update UI (Check your labels!)
+            const up = res.results.find(r => r.label === 'Up-Down').value;
+            const left = res.results.find(r => r.label === 'Left-Right').value;
+
+            document.getElementById("bar-up").style.width = (up * 100) + "%";
+            document.getElementById("text-up").innerText = (up * 100).toFixed(0) + "%";
+            
+            document.getElementById("bar-left").style.width = (left * 100) + "%";
+            document.getElementById("text-left").innerText = (left * 100).toFixed(0) + "%";
         });
     }
 
-    document.getElementById("startBtn").addEventListener("click", requestSensorAccess);
+    document.getElementById("startBtn").addEventListener("click", requestAccess);
+    init();
 </script>
-    
 </body>
 </html>
