@@ -35,36 +35,27 @@
     </div>
 
     <div class="card">
-        <div>Up-Down</div>
+        <div>Up-Down (Y-Axis)</div>
         <div class="bar-container"><div id="bar-up" class="bar-fill"></div></div>
         <div id="text-up">0%</div>
     </div>
     
     <div class="card">
-        <div>Left-Right</div>
+        <div>Left-Right (X-Axis)</div>
         <div class="bar-container"><div id="bar-left" class="bar-fill"></div></div>
         <div id="text-left">0%</div>
     </div>
 </div>
 
-<script src="edge-impulse-standalone.js"></script>
 <script>
-    let classifier;
-
-    async function init() {
-        try {
-            classifier = new EdgeImpulseClassifier();
-            await classifier.init();
-            console.log("Classifier Ready");
-        } catch(e) { console.error("Init failed", e); }
-    }
-
-    async function requestAccess() {
+    function requestAccess() {
         if (typeof DeviceMotionEvent.requestPermission === 'function') {
-            const p = await DeviceMotionEvent.requestPermission();
-            if (p !== 'granted') return alert("Permission Denied");
+            DeviceMotionEvent.requestPermission()
+                .then(p => { if (p === 'granted') startPipeline(); })
+                .catch(console.error);
+        } else {
+            startPipeline();
         }
-        startPipeline();
     }
 
     function startPipeline() {
@@ -73,32 +64,28 @@
         if (wave) wave.style.animation = "moveWave 1s linear infinite";
 
         window.addEventListener('devicemotion', (e) => {
-            let acc = e.acceleration; 
-            if (!acc || (acc.x === null)) {
-                acc = e.accelerationIncludingGravity;
-            }
+            const acc = e.accelerationIncludingGravity;
             if (!acc) return;
 
-            // 1. Update Telemetry
-            document.getElementById("val-x").innerText = acc.x ? acc.x.toFixed(2) : "0.00";
-            document.getElementById("val-y").innerText = acc.y ? acc.y.toFixed(2) : "0.00";
+            // Update Telemetry Numbers
+            document.getElementById("val-x").innerText = acc.x.toFixed(2);
+            document.getElementById("val-y").innerText = acc.y.toFixed(2);
 
-            // 2. Inference
-            const res = classifier.classify([acc.x, acc.y, acc.z]);
+            // Map (-10 to 10) range to (0 to 100) percent
+            // We use Math.min/max to keep bars within 0-100%
+            const upDown = Math.min(Math.max((acc.y + 10) / 20 * 100, 0), 100);
+            const leftRight = Math.min(Math.max((acc.x + 10) / 20 * 100, 0), 100);
+
+            // Update Bars
+            document.getElementById("bar-up").style.width = upDown + "%";
+            document.getElementById("text-up").innerText = Math.round(upDown) + "%";
             
-            // 3. Update Bars (Ensure labels match your Edge Impulse project!)
-            const up = res.results.find(r => r.label === 'Up-Down').value;
-            const left = res.results.find(r => r.label === 'Left-Right').value;
-
-            document.getElementById("bar-up").style.width = (up * 100) + "%";
-            document.getElementById("text-up").innerText = (up * 100).toFixed(0) + "%";
-            document.getElementById("bar-left").style.width = (left * 100) + "%";
-            document.getElementById("text-left").innerText = (left * 100).toFixed(0) + "%";
+            document.getElementById("bar-left").style.width = leftRight + "%";
+            document.getElementById("text-left").innerText = Math.round(leftRight) + "%";
         });
     }
 
     document.getElementById("startBtn").addEventListener("click", requestAccess);
-    init();
 </script>
 </body>
 </html>
