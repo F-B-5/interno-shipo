@@ -67,33 +67,34 @@
         startPipeline();
     }
 
-function startPipeline() {
-    document.getElementById("status").innerText = "Status: Online";
-    const wave = document.getElementById("wave-indicator");
-    if (wave) wave.style.animation = "moveWave 1s linear infinite";
+    function startPipeline() {
+        document.getElementById("status").innerText = "Status: Online (Active)";
+        const wave = document.getElementById("wave-indicator");
+        if (wave) wave.style.animation = "moveWave 1s linear infinite";
 
-    window.addEventListener('devicemotion', (e) => {
-        const acc = e.accelerationIncludingGravity;
-        if (!acc) return;
+        window.addEventListener('devicemotion', (e) => {
+            let acc = e.acceleration; 
+            if (!acc || (acc.x === null)) {
+                acc = e.accelerationIncludingGravity;
+            }
+            if (!acc) return;
 
-        // 1. Update the Axis Readouts (The visual telemetry)
-        document.getElementById("val-x").innerText = acc.x.toFixed(2);
-        document.getElementById("val-y").innerText = acc.y.toFixed(2);
+            // 1. Update Telemetry
+            document.getElementById("val-x").innerText = acc.x ? acc.x.toFixed(2) : "0.00";
+            document.getElementById("val-y").innerText = acc.y ? acc.y.toFixed(2) : "0.00";
 
-        // 2. Run Inference
-        const res = classifier.classify([acc.x, acc.y, acc.z]);
-        
-        // 3. Update AI Probability bars
-        const up = res.results.find(r => r.label === 'Up-Down').value;
-        const left = res.results.find(r => r.label === 'Left-Right').value;
+            // 2. Inference
+            const res = classifier.classify([acc.x, acc.y, acc.z]);
+            
+            // 3. Update Bars (Ensure labels match your Edge Impulse project!)
+            const up = res.results.find(r => r.label === 'Up-Down').value;
+            const left = res.results.find(r => r.label === 'Left-Right').value;
 
-        document.getElementById("bar-up").style.width = (up * 100) + "%";
-        document.getElementById("text-up").innerText = (up * 100).toFixed(0) + "%";
-        
-        document.getElementById("bar-left").style.width = (left * 100) + "%";
-        document.getElementById("text-left").innerText = (left * 100).toFixed(0) + "%";
-    });
-}
+            document.getElementById("bar-up").style.width = (up * 100) + "%";
+            document.getElementById("text-up").innerText = (up * 100).toFixed(0) + "%";
+            document.getElementById("bar-left").style.width = (left * 100) + "%";
+            document.getElementById("text-left").innerText = (left * 100).toFixed(0) + "%";
+        });
     }
 
     document.getElementById("startBtn").addEventListener("click", requestAccess);
